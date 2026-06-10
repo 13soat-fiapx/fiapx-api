@@ -21,12 +21,14 @@ public sealed class ProcessingMessage
         if (string.IsNullOrWhiteSpace(message))
             throw new BusinessException("Message text is required.");
 
-        if (!ProcessingMessageSeverity.IsValid(severity))
+        var normalizedSeverity = severity.Trim();
+
+        if (!ProcessingMessageSeverity.IsValid(normalizedSeverity))
             throw new BusinessException("Message severity must be one of: info, warning, error.");
 
         Code = code.Trim();
         Message = message.Trim();
-        Severity = severity;
+        Severity = normalizedSeverity;
         CreatedAt = DateTimeOffset.UtcNow;
     }
 }
