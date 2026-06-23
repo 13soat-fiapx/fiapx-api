@@ -14,6 +14,10 @@ public sealed class ProcessingJob
     public string UserId { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
     public string UserEmail { get; private set; } = string.Empty;
+    public string? IdempotencyKey { get; private set; }
+    public string? Description { get; private set; }
+    public string? Author { get; private set; }
+    public string? ClientReference { get; private set; }
     public ProcessingStatus Status { get; private set; }
 
     /// <summary>
@@ -46,11 +50,19 @@ public sealed class ProcessingJob
     }
 
     public static ProcessingJob Create(
+        Guid id,
         string userId,
         string userName,
         string userEmail,
-        ProcessingInputFile inputFile)
+        ProcessingInputFile inputFile,
+        string? idempotencyKey = null,
+        string? description = null,
+        string? author = null,
+        string? clientReference = null)
     {
+        if (id == Guid.Empty)
+            throw new BusinessException("Processing job id is required.");
+
         if (string.IsNullOrWhiteSpace(userId))
             throw new BusinessException("User id is required.");
 
@@ -61,17 +73,20 @@ public sealed class ProcessingJob
             throw new BusinessException("User email is required.");
 
         var now = DateTimeOffset.UtcNow;
-        var processingJobId = Guid.NewGuid();
 
         var processingJob = new ProcessingJob
         {
-            Id = processingJobId,
+            Id = id,
             UserId = userId.Trim(),
             UserName = userName.Trim(),
             UserEmail = userEmail.Trim(),
+            IdempotencyKey = NormalizeOptional(idempotencyKey),
+            Description = NormalizeOptional(description),
+            Author = NormalizeOptional(author),
+            ClientReference = NormalizeOptional(clientReference),
             Status = ProcessingStatus.UploadPending,
             InputFile = inputFile ?? throw new BusinessException("Input file is required."),
-            OutputPrefix = $"frames/{processingJobId}/",
+            OutputPrefix = $"frames/{id}/",
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -80,6 +95,70 @@ public sealed class ProcessingJob
             ProcessingCode.JobCreated,
             "Processing job created and waiting for upload confirmation.",
             ProcessingMessageSeverity.Info));
+
+        return processingJob;
+    }
+
+    public static ProcessingJob Restore(
+        Guid id,
+        string userId,
+        string userName,
+        string userEmail,
+        string? idempotencyKey,
+        string? description,
+        string? author,
+        string? clientReference,
+        ProcessingStatus status,
+        ProcessingInputFile inputFile,
+        string outputPrefix,
+        decimal progressPercentage,
+        DateTimeOffset? estimatedCompletionTime,
+        FileResult? resultFile,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt,
+        DateTimeOffset? completedAt,
+        IEnumerable<ProcessingMessage> messages)
+    {
+        if (id == Guid.Empty)
+            throw new BusinessException("Processing job id is required.");
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new BusinessException("User id is required.");
+
+        if (string.IsNullOrWhiteSpace(userName))
+            throw new BusinessException("User name is required.");
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+            throw new BusinessException("User email is required.");
+
+        if (string.IsNullOrWhiteSpace(outputPrefix))
+            throw new BusinessException("Output prefix is required.");
+
+        if (progressPercentage is < 0 or > 100)
+            throw new BusinessException("Progress percentage must be between 0 and 100.");
+
+        var processingJob = new ProcessingJob
+        {
+            Id = id,
+            UserId = userId.Trim(),
+            UserName = userName.Trim(),
+            UserEmail = userEmail.Trim(),
+            IdempotencyKey = NormalizeOptional(idempotencyKey),
+            Description = NormalizeOptional(description),
+            Author = NormalizeOptional(author),
+            ClientReference = NormalizeOptional(clientReference),
+            Status = status,
+            InputFile = inputFile ?? throw new BusinessException("Input file is required."),
+            OutputPrefix = outputPrefix.Trim(),
+            ProgressPercentage = progressPercentage,
+            EstimatedCompletionTime = estimatedCompletionTime,
+            ResultFile = resultFile,
+            CreatedAt = createdAt,
+            UpdatedAt = updatedAt,
+            CompletedAt = completedAt
+        };
+
+        processingJob._messages.AddRange(messages ?? []);
 
         return processingJob;
     }
@@ -162,8 +241,10 @@ public sealed class ProcessingJob
     private void EnsureStatus(ProcessingStatus expectedStatus)
     {
         if (Status != expectedStatus)
-            throw new BusinessException(
+            throw new ConflictException(
                 $"Invalid status for this operation. Expected: '{expectedStatus}'. Current: '{Status}'.");
     }
 
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

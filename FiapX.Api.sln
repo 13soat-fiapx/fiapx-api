@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "5. Tests Layer", "5. Tests 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Solution Items", "0. Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+		Dockerfile = Dockerfile
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -38,6 +40,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Storage", "src\FiapX.Infra.Storage\FiapX.Infra.Storage.csproj", "{DE7B8643-7E64-D49A-EAD7-00788B0D07E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Data", "src\FiapX.Infra.Data\FiapX.Infra.Data.csproj", "{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Tests.Unit", "tests\FiapX.Tests.Unit\FiapX.Tests.Unit.csproj", "{B8874790-740A-8063-CAB8-6977A644AC6B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +77,10 @@ Global
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8874790-740A-8063-CAB8-6977A644AC6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8874790-740A-8063-CAB8-6977A644AC6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8874790-740A-8063-CAB8-6977A644AC6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8874790-740A-8063-CAB8-6977A644AC6B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,6 +93,7 @@ Global
 		{C63A16E3-4B5D-D1E4-2C0A-F5ED4351CD63} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 		{DE7B8643-7E64-D49A-EAD7-00788B0D07E2} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
+		{B8874790-740A-8063-CAB8-6977A644AC6B} = {5D05AB0C-CDA6-4AB0-8472-38E31D290A1B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F9BFFB5-1998-4B7B-BB7F-06B799A9234D}

@@ -1,0 +1,46 @@
+name: fiapx-:SERVICE_NAME
+
+services:
+  localstack:
+    image: localstack/localstack:3
+    container_name: fiapx-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+      SERVICES: s3,sqs,dynamodb
+      DEBUG: "0"
+    volumes:
+      - ./aws/localstack/init:/etc/localstack/init/ready.d
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fiapx-api
+    depends_on:
+      localstack:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Authentication__Enabled: "false"
+      AwsCredentials__Region: us-east-1
+      AwsCredentials__UseLocalstack: "true"
+      AwsCredentials__LocalstackUrl: http://localstack:4566
+      AwsCredentials__AccessKey: test
+      AwsCredentials__SecretAccessKey: test
+      AwsCredentials__SessionToken: test
+      StorageOptions__BucketName: fiapx-media
+      StorageOptions__Region: us-east-1
+      StorageOptions__PublicServiceUrl: http://localhost:4566
+      MessagingOptions__DisableConsumers: "true"
+      MessagingOptions__QueueNames__VideoProcessingRequested: video-processing-requested
+      TableNames__ProcessingJobs: fiapx-processing-jobs

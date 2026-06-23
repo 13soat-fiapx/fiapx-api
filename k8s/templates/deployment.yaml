@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: {{ .Values.image.repository | required "Parameter image.repository is required." }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.app.name }}-configs
+          env:
+            - name: AwsCredentials__AccessKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.app.name }}-aws
+                  key: access-key-id
+            - name: AwsCredentials__SecretAccessKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.app.name }}-aws
+                  key: secret-access-key
+            - name: AwsCredentials__SessionToken
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.app.name }}-aws
+                  key: session-token
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3

@@ -6,4 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.24.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FiapX.Application\FiapX.Application.csproj" />
+    <ProjectReference Include="..\FiapX.Domain\FiapX.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

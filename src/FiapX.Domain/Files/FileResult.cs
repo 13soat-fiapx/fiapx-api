@@ -50,4 +50,45 @@ public sealed class FileResult
         S3Object = s3Object ?? throw new BusinessException("S3 object reference is required.");
         CreatedAt = DateTimeOffset.UtcNow;
     }
+
+    public static FileResult Restore(
+        Guid id,
+        Guid processingJobId,
+        string fileName,
+        string contentType,
+        long sizeBytes,
+        string checksum,
+        S3ObjectReference s3Object,
+        DateTimeOffset createdAt)
+    {
+        if (id == Guid.Empty)
+            throw new BusinessException("File result id is required.");
+
+        if (processingJobId == Guid.Empty)
+            throw new BusinessException("Processing job id is required.");
+
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new BusinessException("File name is required.");
+
+        if (string.IsNullOrWhiteSpace(contentType))
+            throw new BusinessException("File content type is required.");
+
+        if (sizeBytes < 0)
+            throw new BusinessException("File size cannot be negative.");
+
+        if (string.IsNullOrWhiteSpace(checksum))
+            throw new BusinessException("File checksum is required.");
+
+        return new FileResult
+        {
+            Id = id,
+            ProcessingJobId = processingJobId,
+            FileName = fileName.Trim(),
+            ContentType = contentType.Trim(),
+            SizeBytes = sizeBytes,
+            Checksum = checksum.Trim(),
+            S3Object = s3Object ?? throw new BusinessException("S3 object reference is required."),
+            CreatedAt = createdAt
+        };
+    }
 }
