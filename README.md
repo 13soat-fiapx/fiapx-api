@@ -26,7 +26,7 @@ Pré-requisitos:
 
 - Docker Desktop.
 - .NET 8 SDK, apenas se for rodar fora do Docker.
-- AWS CLI, apenas para inspecionar recursos LocalStack ou criar recursos no AWS Student.
+- AWS CLI, apenas para inspecionar recursos LocalStack.
 
 Suba API + LocalStack:
 
@@ -36,18 +36,19 @@ docker compose up --build
 
 Acesse:
 
-- API: `http://localhost:8080`.
-- Swagger: `http://localhost:8080/swagger`.
+- API: `http://localhost:5000`.
+- Swagger: `http://localhost:5000/swagger`.
 - LocalStack: `http://localhost:4566`.
 
 O LocalStack cria automaticamente:
 
-- Bucket S3: `fiapx-media`.
+- Bucket S3: `fiapx-dev-artifacts-000000000000`.
 - Prefixos S3: `videos/` e `frames/`.
-- Tabela DynamoDB: `fiapx-processing-jobs`.
-- Fila SQS: `video-processing-requested`.
-- DLQ SQS: `video-processing-requested-dlq`.
-- Fila SQS: `video-processing-completed`.
+- Tabela DynamoDB: `fiapx-dev-videos-db`.
+- Fila SQS: `fiapx-dev-video-processing-requested`.
+- DLQ SQS: `fiapx-dev-video-processing-requested-dlq`.
+- Fila SQS: `fiapx-dev-video-processing-completed`.
+- DLQ SQS: `fiapx-dev-video-processing-completed-dlq`.
 
 ## Rodando local sem Docker
 
@@ -60,7 +61,7 @@ docker compose up localstack
 Rode a API pelo .NET:
 
 ```powershell
-dotnet run --project src/FiapX.Api/FiapX.Api.csproj --urls http://localhost:8080
+dotnet run --project src/FiapX.Api/FiapX.Api.csproj --urls http://localhost:5000
 ```
 
 ## Teste manual do fluxo
@@ -68,11 +69,9 @@ dotnet run --project src/FiapX.Api/FiapX.Api.csproj --urls http://localhost:8080
 Crie um processing job:
 
 ```powershell
-curl -X POST http://localhost:8080/v1/processing-jobs `
+curl -X POST http://localhost:5000/v1/processing-jobs `
   -H "Content-Type: application/json" `
-  -H "X-User-Id: auth0|local-user" `
-  -H "X-User-Name: Local User" `
-  -H "X-User-Email: local.user@example.com" `
+  -H "Authorization: Bearer <jwt-com-sub-name-email>" `
   -d '{"inputFile":{"originalFileName":"sample.mp4","contentType":"video/mp4","sizeBytes":12345},"description":"Demo video","author":"Local User","clientReference":"demo-001"}'
 ```
 
@@ -87,19 +86,17 @@ curl -X PUT "<upload.url>" `
 Confirme o upload:
 
 ```powershell
-curl -X POST http://localhost:8080/v1/processing-jobs/<id>/upload-completion `
+curl -X POST http://localhost:5000/v1/processing-jobs/<id>/upload-completion `
   -H "Content-Type: application/json" `
-  -H "X-User-Id: auth0|local-user" `
-  -H "X-User-Name: Local User" `
-  -H "X-User-Email: local.user@example.com" `
+  -H "Authorization: Bearer <jwt-com-sub-name-email>" `
   -d '{}'
 ```
 
 Consulte o status:
 
 ```powershell
-curl http://localhost:8080/v1/processing-jobs/<id> `
-  -H "X-User-Id: auth0|local-user"
+curl http://localhost:5000/v1/processing-jobs/<id> `
+  -H "Authorization: Bearer <jwt-com-sub-name-email>"
 ```
 
 Inspecione a mensagem publicada na fila local:
@@ -107,39 +104,22 @@ Inspecione a mensagem publicada na fila local:
 ```powershell
 aws --endpoint-url=http://localhost:4566 sqs receive-message `
   --region us-east-1 `
-  --queue-url http://localhost:4566/000000000000/video-processing-requested `
+  --queue-url http://localhost:4566/000000000000/fiapx-dev-video-processing-requested `
   --attribute-names All `
   --message-attribute-names All
 ```
 
 ## Configuração AWS Student
 
-Para usar AWS Student/Lab, configure credenciais temporárias por variáveis de ambiente ou `appsettings.Local.json`.
-
-Variáveis principais:
+No AWS Student/Lab, os recursos reais não são criados por scripts dentro do `fiapx-api`. O padrão do projeto é usar o repositório `fiapx-infra`, que provisiona S3, SQS, DynamoDB, ECR, EKS, secrets e gateway por Terraform.
 
 ```powershell
-$env:AwsCredentials__UseLocalstack="false"
-$env:AwsCredentials__Region="us-east-1"
-$env:AwsCredentials__AccessKey="<access-key>"
-$env:AwsCredentials__SecretAccessKey="<secret-access-key>"
-$env:AwsCredentials__SessionToken="<session-token>"
-$env:StorageOptions__BucketName="<bucket-unico>"
-$env:TableNames__ProcessingJobs="fiapx-processing-jobs"
-$env:MessagingOptions__QueueNames__VideoProcessingRequested="video-processing-requested"
+cd ..\fiapx-infra
+aws configure
+.\scripts\initialize-infrastructure.ps1 dev
 ```
 
-Crie os recursos AWS:
-
-```bash
-bash aws/student/create-resources.sh
-```
-
-Remova os recursos AWS:
-
-```bash
-bash aws/student/delete-resources.sh
-```
+Depois disso, publique a imagem da API no ECR e instale o chart em `k8s/`, informando `image.repository`, `image.tag`, `app.env` e `storage.bucketName`. O chart da API segue o padrão `Deployment + Service + Ingress + HPA`.
 
 ## Documentação complementar
 

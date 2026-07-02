@@ -78,6 +78,7 @@ public sealed class ExceptionHandlerMiddleware(
     {
         return exception switch
         {
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             EntityNotFoundException => StatusCodes.Status404NotFound,
             ForbiddenException => StatusCodes.Status403Forbidden,
             ConflictException => StatusCodes.Status409Conflict,

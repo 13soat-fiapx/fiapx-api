@@ -15,12 +15,7 @@ public static class AuthExtensions
         if (!configuration.GetValue<bool>("Authentication:Enabled"))
             return services;
 
-#if DEBUG
         services.AddAuthenticationWithoutValidation();
-#else
-        services.AddValidatedAuthentication(configuration);
-#endif
-
         services.AddAuthorization();
 
         return services;
@@ -43,7 +38,11 @@ public static class AuthExtensions
     private static IServiceCollection AddAuthenticationWithoutValidation(this IServiceCollection services)
     {
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -54,21 +53,6 @@ public static class AuthExtensions
                     ValidateIssuerSigningKey = false,
                     SignatureValidator = (token, _) => new JsonWebToken(token)
                 };
-            });
-
-        return services;
-    }
-
-    private static IServiceCollection AddValidatedAuthentication(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.Authority = configuration["Authentication:Authority"];
-                options.Audience = configuration["Authentication:Audience"];
             });
 
         return services;

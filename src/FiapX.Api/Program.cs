@@ -53,19 +53,12 @@ app.UseRouting();
 app.UseCors("AllowAllOrigins");
 app.UseApiAuthentication();
 
-app.MapGet("/", () => Results.Ok(new
-{
-    name = "fiapx-api",
-    status = "running",
-    documentation = "/swagger"
-})).ExcludeFromDescription();
-
 var controllers = app.MapControllers();
 if (app.Configuration.IsAuthenticationEnabled())
     controllers.RequireAuthorization();
 
 if (!app.Environment.IsProduction())
-    app.UseSwaggerDocumentation();
+    app.UseSwaggerDocumentation(routePrefix);
 
 app.UseHealthChecks("/health");
 

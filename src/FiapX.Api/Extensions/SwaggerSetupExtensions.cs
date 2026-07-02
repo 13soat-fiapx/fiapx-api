@@ -50,12 +50,21 @@ public static class SwaggerSetupExtensions
         return services;
     }
 
-    public static IApplicationBuilder UseSwaggerDocumentation(this IApplicationBuilder app)
+    public static IApplicationBuilder UseSwaggerDocumentation(
+        this IApplicationBuilder app,
+        string? routePrefix)
     {
+        var normalizedRoutePrefix = string.IsNullOrWhiteSpace(routePrefix)
+            ? string.Empty
+            : routePrefix.Trim('/');
+        var swaggerEndpoint = string.IsNullOrWhiteSpace(normalizedRoutePrefix)
+            ? "/swagger/v1/swagger.json"
+            : $"/{normalizedRoutePrefix}/swagger/v1/swagger.json";
+
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "FIAP X API v1");
+            options.SwaggerEndpoint(swaggerEndpoint, "FIAP X API v1");
             options.RoutePrefix = "swagger";
         });
 

@@ -7,10 +7,8 @@ public sealed class CurrentUserService(
     IHttpContextAccessor httpContextAccessor,
     IConfiguration configuration) : ICurrentUserService
 {
-    public string UserId => GetClaim(ClaimTypes.NameIdentifier, "sub")
-        ?? GetHeader("X-User-Id")
-        ?? configuration["LocalUser:Id"]
-        ?? "local-user";
+    public string UserId => GetAuthenticatedUserId()
+        ?? GetLocalUserValue("X-User-Id", "LocalUser:Id", "local-user");
 
     public string UserName => GetClaim(ClaimTypes.Name, "name")
         ?? GetHeader("X-User-Name")
@@ -21,6 +19,25 @@ public sealed class CurrentUserService(
         ?? GetHeader("X-User-Email")
         ?? configuration["LocalUser:Email"]
         ?? "local.user@example.com";
+
+    private string? GetAuthenticatedUserId()
+    {
+        var userId = GetClaim(ClaimTypes.NameIdentifier, "sub");
+        if (!string.IsNullOrWhiteSpace(userId))
+            return userId;
+
+        if (configuration.GetValue<bool>("Authentication:Enabled"))
+            throw new UnauthorizedAccessException("Authenticated token must contain the user subject claim.");
+
+        return null;
+    }
+
+    private string GetLocalUserValue(string headerName, string configurationKey, string fallback)
+    {
+        return GetHeader(headerName)
+            ?? configuration[configurationKey]
+            ?? fallback;
+    }
 
     private string? GetClaim(params string[] claimTypes)
     {

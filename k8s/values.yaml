@@ -19,17 +19,15 @@ aws:
 
 auth:
   enabled: true
-  authority: "https://dev-oq5eot5o33s27xpo.us.auth0.com/"
-  audience: ""
 
 storage:
-  bucketName: fiapx-dev-media
+  bucketName: ""
   uploadUrlExpirationMinutes: 15
   downloadUrlExpirationMinutes: 5
   publicServiceUrl: ""
 
 tables:
-  processingJobs: fiapx-dev-videos-db
+  processingJobs: ""
 
 queueNames:
   VideoProcessingRequested: video-processing-requested
