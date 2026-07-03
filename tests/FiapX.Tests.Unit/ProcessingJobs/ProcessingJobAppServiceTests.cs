@@ -186,6 +186,47 @@ public sealed class ProcessingJobAppServiceTests
         Assert.AreEqual(ProcessingStatus.Failed, existingProcessingJob.Status);
     }
 
+    [TestMethod]
+    public async Task CompleteUploadAsync_ShouldReplayQueuedProcessingJob_WhenIdempotencyKeyIsProvided()
+    {
+        var request = BuildCreateRequest();
+        var processingJobId = Guid.NewGuid();
+        var existingProcessingJob = BuildProcessingJob(processingJobId, request);
+        existingProcessingJob.ConfirmUpload();
+
+        _processingJobRepositoryMock
+            .Setup(repository => repository.GetByIdAsync(processingJobId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingProcessingJob);
+
+        _storageServiceMock
+            .Setup(storage => storage.GetObjectMetadataAsync(
+                existingProcessingJob.InputFile.S3Object,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new S3ObjectMetadata
+            {
+                SizeBytes = request.InputFile.SizeBytes,
+                Checksum = request.InputFile.Checksum
+            });
+
+        var result = await _service.CompleteUploadAsync(
+            processingJobId,
+            new CompleteProcessingJobUploadRequest
+            {
+                SizeBytes = request.InputFile.SizeBytes,
+                Checksum = request.InputFile.Checksum
+            },
+            "completion-key-1",
+            CancellationToken.None);
+
+        Assert.AreEqual(ProcessingStatus.Queued, result.Status);
+        _processingJobRepositoryMock.Verify(
+            repository => repository.SaveAsync(It.IsAny<ProcessingJob>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _messagePublisherMock.Verify(
+            publisher => publisher.PublishAsync(It.IsAny<VideoProcessingRequestedMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private static CreateProcessingJobRequest BuildCreateRequest(string clientReference = "client-123")
     {
         return new CreateProcessingJobRequest

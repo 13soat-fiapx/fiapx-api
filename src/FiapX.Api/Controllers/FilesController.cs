@@ -28,7 +28,7 @@ public sealed class FilesController(ProcessingJobAppService processingJobAppServ
         CancellationToken cancellationToken)
     {
         var result = await processingJobAppService.GetFileMetadataAsync(fileId, cancellationToken);
-        var response = ProcessingJobResponseMapper.ToFileResultResponse(result);
+        var response = ProcessingJobResponseMapper.ToFileResultResponse(result, Request.PathBase.Value);
         Response.Headers.CacheControl = "private, max-age=60";
 
         return Ok(response);

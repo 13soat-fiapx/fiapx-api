@@ -8,6 +8,11 @@ namespace FiapX.Infra.Data.Models;
 [DynamoDBTable(nameof(ProcessingJobModel), LowerCamelCaseProperties = true)]
 public sealed class ProcessingJobModel
 {
+    private const int RetentionDays = 30;
+    private const string DefaultResultFileName = "frames.zip";
+    private const string DefaultResultContentType = "application/zip";
+    private const string MissingChecksum = "not-provided";
+
     [DynamoDBHashKey]
     public string Id { get; set; } = string.Empty;
 
@@ -28,10 +33,13 @@ public sealed class ProcessingJobModel
     public string OutputPrefix { get; set; } = string.Empty;
     public decimal ProgressPercentage { get; set; }
     public string? EstimatedCompletionTime { get; set; }
-    public FileResultModel? ResultFile { get; set; }
+    public S3ObjectReferenceModel? ResultFile { get; set; }
+    public long? ResultSizeBytes { get; set; }
+    public string? ResultChecksum { get; set; }
     public string CreatedAt { get; set; } = string.Empty;
     public string UpdatedAt { get; set; } = string.Empty;
     public string? CompletedAt { get; set; }
+    public long? ExpireAt { get; set; }
     public List<ProcessingMessageModel> Messages { get; set; } = [];
 
     public ProcessingJob ToDomain()
@@ -50,7 +58,7 @@ public sealed class ProcessingJobModel
             OutputPrefix,
             ProgressPercentage,
             ParseNullableDateTimeOffset(EstimatedCompletionTime),
-            ResultFile?.ToDomain(),
+            ToDomainResultFile(),
             DateTimeOffset.Parse(CreatedAt),
             DateTimeOffset.Parse(UpdatedAt),
             ParseNullableDateTimeOffset(CompletedAt),
@@ -75,10 +83,15 @@ public sealed class ProcessingJobModel
             ProgressPercentage = processingJob.ProgressPercentage,
             EstimatedCompletionTime = processingJob.EstimatedCompletionTime?.UtcDateTime.ToString("O"),
             ResultFileId = processingJob.ResultFile?.Id.ToString(),
-            ResultFile = processingJob.ResultFile is null ? null : FileResultModel.FromDomain(processingJob.ResultFile),
+            ResultFile = processingJob.ResultFile is null
+                ? null
+                : S3ObjectReferenceModel.FromDomain(processingJob.ResultFile.S3Object),
+            ResultSizeBytes = processingJob.ResultFile?.SizeBytes,
+            ResultChecksum = processingJob.ResultFile?.Checksum,
             CreatedAt = processingJob.CreatedAt.UtcDateTime.ToString("O"),
             UpdatedAt = processingJob.UpdatedAt.UtcDateTime.ToString("O"),
             CompletedAt = processingJob.CompletedAt?.UtcDateTime.ToString("O"),
+            ExpireAt = processingJob.CreatedAt.AddDays(RetentionDays).ToUnixTimeSeconds(),
             Messages = processingJob.Messages.Select(ProcessingMessageModel.FromDomain).ToList()
         };
     }
@@ -113,6 +126,32 @@ public sealed class ProcessingJobModel
     {
         return string.IsNullOrWhiteSpace(value) ? null : DateTimeOffset.Parse(value);
     }
+
+    private FileResult? ToDomainResultFile()
+    {
+        if (ResultFile is null || string.IsNullOrWhiteSpace(ResultFileId))
+            return null;
+
+        var createdAt = ParseNullableDateTimeOffset(CompletedAt)
+            ?? ParseNullableDateTimeOffset(UpdatedAt)
+            ?? DateTimeOffset.UtcNow;
+
+        return FileResult.Restore(
+            Guid.Parse(ResultFileId),
+            Guid.Parse(Id),
+            ResolveResultFileName(ResultFile.Key),
+            DefaultResultContentType,
+            ResultSizeBytes ?? 0,
+            string.IsNullOrWhiteSpace(ResultChecksum) ? MissingChecksum : ResultChecksum,
+            ResultFile.ToDomain(),
+            createdAt);
+    }
+
+    private static string ResolveResultFileName(string key)
+    {
+        var fileName = Path.GetFileName(key);
+        return string.IsNullOrWhiteSpace(fileName) ? DefaultResultFileName : fileName;
+    }
 }
 
 public sealed class ProcessingInputFileModel
@@ -142,46 +181,6 @@ public sealed class ProcessingInputFileModel
             ContentType = inputFile.ContentType,
             SizeBytes = inputFile.SizeBytes,
             Checksum = inputFile.Checksum
-        };
-    }
-}
-
-public sealed class FileResultModel
-{
-    public string Id { get; set; } = string.Empty;
-    public string ProcessingJobId { get; set; } = string.Empty;
-    public string FileName { get; set; } = string.Empty;
-    public string ContentType { get; set; } = string.Empty;
-    public long SizeBytes { get; set; }
-    public string Checksum { get; set; } = string.Empty;
-    public S3ObjectReferenceModel S3Object { get; set; } = new();
-    public string CreatedAt { get; set; } = string.Empty;
-
-    public FileResult ToDomain()
-    {
-        return FileResult.Restore(
-            Guid.Parse(Id),
-            Guid.Parse(ProcessingJobId),
-            FileName,
-            ContentType,
-            SizeBytes,
-            Checksum,
-            S3Object.ToDomain(),
-            DateTimeOffset.Parse(CreatedAt));
-    }
-
-    public static FileResultModel FromDomain(FileResult fileResult)
-    {
-        return new FileResultModel
-        {
-            Id = fileResult.Id.ToString(),
-            ProcessingJobId = fileResult.ProcessingJobId.ToString(),
-            FileName = fileResult.FileName,
-            ContentType = fileResult.ContentType,
-            SizeBytes = fileResult.SizeBytes,
-            Checksum = fileResult.Checksum,
-            S3Object = S3ObjectReferenceModel.FromDomain(fileResult.S3Object),
-            CreatedAt = fileResult.CreatedAt.UtcDateTime.ToString("O")
         };
     }
 }

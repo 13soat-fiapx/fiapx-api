@@ -2,13 +2,13 @@ using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using FiapX.Application.ProcessingJobs.Repositories;
-using FiapX.Infra.CrossCutting.IoC.Options;
+using FiapX.Infra.CrossCutting.Options;
 using FiapX.Infra.Data.Options;
 using FiapX.Infra.Data.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FiapX.Infra.CrossCutting.IoC.Extensions;
+namespace FiapX.Infra.CrossCutting;
 
 public static class RepositoryExtensions
 {

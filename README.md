@@ -36,8 +36,8 @@ docker compose up --build
 
 Acesse:
 
-- API: `http://localhost:5000`.
-- Swagger: `http://localhost:5000/swagger`.
+- API: `http://localhost:5000/api`.
+- Swagger: `http://localhost:5000/api/swagger`.
 - LocalStack: `http://localhost:4566`.
 
 O LocalStack cria automaticamente:
@@ -61,6 +61,7 @@ docker compose up localstack
 Rode a API pelo .NET:
 
 ```powershell
+$env:AppInfo__RoutePrefix="api"
 dotnet run --project src/FiapX.Api/FiapX.Api.csproj --urls http://localhost:5000
 ```
 
@@ -69,7 +70,7 @@ dotnet run --project src/FiapX.Api/FiapX.Api.csproj --urls http://localhost:5000
 Crie um processing job:
 
 ```powershell
-curl -X POST http://localhost:5000/v1/processing-jobs `
+curl -X POST http://localhost:5000/api/v1/processing-jobs `
   -H "Content-Type: application/json" `
   -H "Authorization: Bearer <jwt-com-sub-name-email>" `
   -d '{"inputFile":{"originalFileName":"sample.mp4","contentType":"video/mp4","sizeBytes":12345},"description":"Demo video","author":"Local User","clientReference":"demo-001"}'
@@ -86,16 +87,17 @@ curl -X PUT "<upload.url>" `
 Confirme o upload:
 
 ```powershell
-curl -X POST http://localhost:5000/v1/processing-jobs/<id>/upload-completion `
+curl -X POST http://localhost:5000/api/v1/processing-jobs/<id>/upload-completion `
   -H "Content-Type: application/json" `
   -H "Authorization: Bearer <jwt-com-sub-name-email>" `
+  -H "Idempotency-Key: demo-upload-001" `
   -d '{}'
 ```
 
 Consulte o status:
 
 ```powershell
-curl http://localhost:5000/v1/processing-jobs/<id> `
+curl http://localhost:5000/api/v1/processing-jobs/<id> `
   -H "Authorization: Bearer <jwt-com-sub-name-email>"
 ```
 

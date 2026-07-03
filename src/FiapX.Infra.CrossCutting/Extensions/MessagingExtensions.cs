@@ -1,14 +1,14 @@
 using Amazon;
 using Amazon.SQS;
 using FiapX.Application.Abstractions.Messaging;
-using FiapX.Infra.CrossCutting.IoC.Options;
+using FiapX.Infra.CrossCutting.Options;
 using FiapX.Infra.Messaging.Helpers;
 using FiapX.Infra.Messaging.Options;
 using FiapX.Infra.Messaging.Publishers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FiapX.Infra.CrossCutting.IoC.Extensions;
+namespace FiapX.Infra.CrossCutting;
 
 public static class MessagingExtensions
 {

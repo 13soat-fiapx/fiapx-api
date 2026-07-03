@@ -1,35 +1,23 @@
 using FiapX.Application.Abstractions.Auth;
+using FiapX.Infra.CrossCutting.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-namespace FiapX.Api.Security;
+namespace FiapX.Infra.CrossCutting;
 
 public static class AuthExtensions
 {
-    public static IServiceCollection AddApiAuthentication(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-        if (!configuration.GetValue<bool>("Authentication:Enabled"))
-            return services;
-
         services.AddAuthenticationWithoutValidation();
         services.AddAuthorization();
 
         return services;
-    }
-
-    public static IApplicationBuilder UseApiAuthentication(this WebApplication app)
-    {
-        if (!app.Configuration.GetValue<bool>("Authentication:Enabled"))
-            return app;
-
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        return app;
     }
 
     public static bool IsAuthenticationEnabled(this IConfiguration configuration) =>

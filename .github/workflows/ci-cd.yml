@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, release, develop]
+  pull_request:
+    branches: [main, release, develop]
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  tests:
+    name: Run tests
+    uses: 13soat-fiapx/fiapx-infra/.github/workflows/dotnet-tests.yml@main
+    with:
+      enable_sonar: ${{ (github.event_name == 'pull_request' && github.base_ref == 'main') || (github.event_name == 'workflow_dispatch' && github.ref_name == 'main') }}
+      sonar_project_key: "fiapx-${{ vars.SERVICE_NAME }}"
+    secrets: inherit
+
+  resolve-environment:
+    name: Resolve environment name
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: resolve
+        uses: 13soat-fiapx/fiapx-infra/.github/actions/resolve-environment@main
+
+  deploy:
+    name: Deploy Helm
+    needs: [tests, resolve-environment]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    uses: 13soat-fiapx/fiapx-infra/.github/workflows/deploy-helm.yml@main
+    with:
+      environment: ${{ needs.resolve-environment.outputs.environment }}
+      service-name: ${{ vars.SERVICE_NAME }}
+    secrets: inherit

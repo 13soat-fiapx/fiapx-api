@@ -34,6 +34,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      AppInfo__RoutePrefix: api
       Authentication__Enabled: "true"
       AwsCredentials__Region: us-east-1
       AwsCredentials__UseLocalstack: "true"

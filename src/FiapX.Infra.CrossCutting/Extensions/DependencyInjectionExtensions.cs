@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FiapX.Infra.CrossCutting.IoC.Extensions;
+namespace FiapX.Infra.CrossCutting;
 
 public static class DependencyInjectionExtensions
 {

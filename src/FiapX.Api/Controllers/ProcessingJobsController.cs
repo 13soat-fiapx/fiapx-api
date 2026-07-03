@@ -37,7 +37,7 @@ public sealed class ProcessingJobsController(ProcessingJobAppService processingJ
         };
 
         var result = await processingJobAppService.ListAsync(request, cancellationToken);
-        return Ok(ProcessingJobResponseMapper.ToPagedResponse(result, query.Status));
+        return Ok(ProcessingJobResponseMapper.ToPagedResponse(result, query.Status, Request.PathBase.Value));
     }
 
     /// <summary>
@@ -63,9 +63,9 @@ public sealed class ProcessingJobsController(ProcessingJobAppService processingJ
         CancellationToken cancellationToken)
     {
         var result = await processingJobAppService.CreateAsync(request, idempotencyKey, cancellationToken);
-        var response = ProcessingJobResponseMapper.ToCreatedResponse(result);
+        var response = ProcessingJobResponseMapper.ToCreatedResponse(result, Request.PathBase.Value);
 
-        return Created($"/v1/processing-jobs/{response.Id}", response);
+        return Created(response.Links["self"].Href, response);
     }
 
     /// <summary>
@@ -88,16 +88,18 @@ public sealed class ProcessingJobsController(ProcessingJobAppService processingJ
     public async Task<IActionResult> CompleteUploadAsync(
         [FromRoute] Guid processingJobId,
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CompleteProcessingJobUploadRequest? request,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
         CancellationToken cancellationToken)
     {
         var processingJob = await processingJobAppService.CompleteUploadAsync(
             processingJobId,
             request ?? new CompleteProcessingJobUploadRequest(),
+            idempotencyKey,
             cancellationToken);
-        var response = ProcessingJobResponseMapper.ToStatusResponse(processingJob);
+        var response = ProcessingJobResponseMapper.ToStatusResponse(processingJob, Request.PathBase.Value);
 
         Response.Headers.RetryAfter = "5";
-        return Accepted($"/v1/processing-jobs/{response.Id}", response);
+        return Accepted(response.Links["self"].Href, response);
     }
 
     /// <summary>
@@ -119,7 +121,7 @@ public sealed class ProcessingJobsController(ProcessingJobAppService processingJ
         CancellationToken cancellationToken)
     {
         var processingJob = await processingJobAppService.GetStatusAsync(processingJobId, cancellationToken);
-        var response = ProcessingJobResponseMapper.ToStatusResponse(processingJob);
+        var response = ProcessingJobResponseMapper.ToStatusResponse(processingJob, Request.PathBase.Value);
 
         if (response.Status == ProcessingStatusContractMapper.Succeeded &&
             response.Links.TryGetValue("result", out var resultLink))

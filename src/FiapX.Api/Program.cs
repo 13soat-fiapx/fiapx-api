@@ -1,7 +1,6 @@
 using FiapX.Api.Extensions;
 using FiapX.Api.Middlewares;
-using FiapX.Api.Security;
-using FiapX.Infra.CrossCutting.IoC.Extensions;
+using FiapX.Infra.CrossCutting;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using System.Diagnostics;
 using System.Text.Json;
@@ -27,9 +26,8 @@ builder.Services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerDocumentation(builder.Configuration);
 
-builder.Services.AddApiAuthentication(builder.Configuration);
-
 builder.Services
+    .AddJwtAuthentication(builder.Configuration)
     .AddDataRepositories(builder.Configuration)
     .AddStorage(builder.Configuration)
     .AddMessaging(builder.Configuration)
@@ -51,7 +49,8 @@ app.UseMiddleware<DomainValidationMiddleware>();
 
 app.UseRouting();
 app.UseCors("AllowAllOrigins");
-app.UseApiAuthentication();
+app.UseAuthentication();
+app.UseAuthorization();
 
 var controllers = app.MapControllers();
 if (app.Configuration.IsAuthenticationEnabled())

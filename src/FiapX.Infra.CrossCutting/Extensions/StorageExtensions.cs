@@ -1,13 +1,13 @@
 using Amazon;
 using Amazon.S3;
 using FiapX.Application.Abstractions.Storage;
-using FiapX.Infra.CrossCutting.IoC.Options;
+using FiapX.Infra.CrossCutting.Options;
 using FiapX.Infra.Storage.Options;
 using FiapX.Infra.Storage.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FiapX.Infra.CrossCutting.IoC.Extensions;
+namespace FiapX.Infra.CrossCutting;
 
 public static class StorageExtensions
 {

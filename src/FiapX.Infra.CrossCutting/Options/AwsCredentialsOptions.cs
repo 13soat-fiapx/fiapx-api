@@ -1,4 +1,4 @@
-namespace FiapX.Infra.CrossCutting.IoC.Options;
+namespace FiapX.Infra.CrossCutting.Options;
 
 public class AwsCredentialsOptions
 {

@@ -1,7 +1,7 @@
 using Amazon.Runtime;
-using FiapX.Infra.CrossCutting.IoC.Options;
+using FiapX.Infra.CrossCutting.Options;
 
-namespace FiapX.Infra.CrossCutting.IoC.Extensions;
+namespace FiapX.Infra.CrossCutting;
 
 internal static class AwsClientFactory
 {

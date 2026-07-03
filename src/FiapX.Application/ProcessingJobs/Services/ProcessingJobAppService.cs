@@ -5,6 +5,7 @@ using FiapX.Application.ProcessingJobs.Messages;
 using FiapX.Application.ProcessingJobs.Repositories;
 using FiapX.Application.ProcessingJobs.Requests;
 using FiapX.Application.ProcessingJobs.Results;
+using FiapX.Application.Utils;
 using FiapX.Domain.Base.Exceptions;
 using FiapX.Domain.ProcessingJobs;
 
@@ -14,7 +15,7 @@ public sealed class ProcessingJobAppService(
     IProcessingJobRepository processingJobRepository,
     IStorageService storageService,
     IMessagePublisher messagePublisher,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService) : IAppService
 {
     public Task<CreatedProcessingJobResult> CreateAsync(
         CreateProcessingJobRequest request,
@@ -76,10 +77,18 @@ public sealed class ProcessingJobAppService(
     public async Task<ProcessingJob> CompleteUploadAsync(
         Guid processingJobId,
         CompleteProcessingJobUploadRequest request,
+        CancellationToken cancellationToken) =>
+        await CompleteUploadAsync(processingJobId, request, null, cancellationToken);
+
+    public async Task<ProcessingJob> CompleteUploadAsync(
+        Guid processingJobId,
+        CompleteProcessingJobUploadRequest request,
+        string? idempotencyKey,
         CancellationToken cancellationToken)
     {
         var processingJob = await GetProcessingJobAsync(processingJobId, cancellationToken);
         EnsureCurrentUserOwns(processingJob);
+        var normalizedIdempotencyKey = NormalizeOptional(idempotencyKey);
 
         var metadata = await storageService.GetObjectMetadataAsync(
             processingJob.InputFile.S3Object,
@@ -95,6 +104,16 @@ public sealed class ProcessingJobAppService(
             !string.IsNullOrWhiteSpace(metadata.Checksum) &&
             !string.Equals(request.Checksum.Trim(), metadata.Checksum.Trim(), StringComparison.OrdinalIgnoreCase))
             throw new BusinessException("Uploaded file checksum does not match the informed checksum.");
+
+        if (processingJob.Status != ProcessingStatus.UploadPending)
+        {
+            if (normalizedIdempotencyKey is not null &&
+                processingJob.Status is ProcessingStatus.Queued or ProcessingStatus.Processing or ProcessingStatus.Succeeded)
+                return processingJob;
+
+            throw new ConflictException(
+                $"Invalid status for this operation. Expected: '{ProcessingStatus.UploadPending}'. Current: '{processingJob.Status}'.");
+        }
 
         processingJob.ConfirmUpload();
 

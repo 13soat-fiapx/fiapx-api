@@ -7,7 +7,9 @@ namespace FiapX.Application.ProcessingJobs.Responses;
 
 public static class ProcessingJobResponseMapper
 {
-    public static ProcessingJobCreatedResponse ToCreatedResponse(CreatedProcessingJobResult result)
+    public static ProcessingJobCreatedResponse ToCreatedResponse(
+        CreatedProcessingJobResult result,
+        string? pathBase = null)
     {
         var processingJob = result.ProcessingJob;
         var upload = result.Upload;
@@ -27,11 +29,13 @@ public static class ProcessingJobResponseMapper
             },
             Messages = processingJob.Messages.Select(ToResponse).ToList(),
             CreatedAt = processingJob.CreatedAt,
-            Links = BuildProcessingJobLinks(processingJob)
+            Links = BuildProcessingJobLinks(processingJob, pathBase)
         };
     }
 
-    public static ProcessingJobStatusResponse ToStatusResponse(ProcessingJob processingJob)
+    public static ProcessingJobStatusResponse ToStatusResponse(
+        ProcessingJob processingJob,
+        string? pathBase = null)
     {
         return new ProcessingJobStatusResponse
         {
@@ -45,25 +49,28 @@ public static class ProcessingJobResponseMapper
             ProgressPercentage = processingJob.ProgressPercentage,
             CreatedAt = processingJob.CreatedAt,
             UpdatedAt = processingJob.UpdatedAt,
-            Links = BuildProcessingJobLinks(processingJob)
+            Links = BuildProcessingJobLinks(processingJob, pathBase)
         };
     }
 
     public static PagedResponse<ProcessingJobStatusResponse> ToPagedResponse(
         PagedResult<ProcessingJob> result,
-        string? status)
+        string? status,
+        string? pathBase = null)
     {
         return new PagedResponse<ProcessingJobStatusResponse>
         {
-            Items = result.Items.Select(ToStatusResponse).ToList(),
+            Items = result.Items.Select(item => ToStatusResponse(item, pathBase)).ToList(),
             Page = result.Page,
             Size = result.Size,
             Total = result.Total,
-            Links = BuildProcessingJobListLinks(status, result.Page, result.Size)
+            Links = BuildProcessingJobListLinks(status, result.Page, result.Size, pathBase)
         };
     }
 
-    public static FileResultResponse ToFileResultResponse(FileResultMetadataResult result)
+    public static FileResultResponse ToFileResultResponse(
+        FileResultMetadataResult result,
+        string? pathBase = null)
     {
         return new FileResultResponse
         {
@@ -74,7 +81,7 @@ public static class ProcessingJobResponseMapper
             Checksum = result.FileResult.Checksum,
             Object = ToResponse(result.FileResult.S3Object),
             ExpiresAt = result.ExpiresAt,
-            Links = BuildFileResultLinks(result.FileResult.Id)
+            Links = BuildFileResultLinks(result.FileResult.Id, pathBase)
         };
     }
 
@@ -107,13 +114,15 @@ public static class ProcessingJobResponseMapper
         };
     }
 
-    private static IReadOnlyDictionary<string, LinkResponse> BuildProcessingJobLinks(ProcessingJob processingJob)
+    private static IReadOnlyDictionary<string, LinkResponse> BuildProcessingJobLinks(
+        ProcessingJob processingJob,
+        string? pathBase)
     {
         var links = new Dictionary<string, LinkResponse>
         {
             ["self"] = new()
             {
-                Href = $"/v1/processing-jobs/{processingJob.Id}",
+                Href = ApplyPathBase(pathBase, $"/v1/processing-jobs/{processingJob.Id}"),
                 Title = "Processing job status"
             }
         };
@@ -122,7 +131,7 @@ public static class ProcessingJobResponseMapper
         {
             links["complete-upload"] = new LinkResponse
             {
-                Href = $"/v1/processing-jobs/{processingJob.Id}/upload-completion",
+                Href = ApplyPathBase(pathBase, $"/v1/processing-jobs/{processingJob.Id}/upload-completion"),
                 Method = "POST",
                 Title = "Confirm upload completion"
             };
@@ -132,7 +141,7 @@ public static class ProcessingJobResponseMapper
         {
             links["result"] = new LinkResponse
             {
-                Href = $"/v1/files/{processingJob.ResultFile.Id}",
+                Href = ApplyPathBase(pathBase, $"/v1/files/{processingJob.ResultFile.Id}"),
                 Title = "Processing result"
             };
         }
@@ -140,18 +149,18 @@ public static class ProcessingJobResponseMapper
         return links;
     }
 
-    private static IReadOnlyDictionary<string, LinkResponse> BuildFileResultLinks(Guid fileId)
+    private static IReadOnlyDictionary<string, LinkResponse> BuildFileResultLinks(Guid fileId, string? pathBase)
     {
         return new Dictionary<string, LinkResponse>
         {
             ["self"] = new()
             {
-                Href = $"/v1/files/{fileId}",
+                Href = ApplyPathBase(pathBase, $"/v1/files/{fileId}"),
                 Title = "File metadata"
             },
             ["content"] = new()
             {
-                Href = $"/v1/files/{fileId}/content",
+                Href = ApplyPathBase(pathBase, $"/v1/files/{fileId}/content"),
                 Title = "Download file content"
             }
         };
@@ -160,13 +169,14 @@ public static class ProcessingJobResponseMapper
     private static IReadOnlyDictionary<string, LinkResponse> BuildProcessingJobListLinks(
         string? status,
         int page,
-        int size)
+        int size,
+        string? pathBase)
     {
         return new Dictionary<string, LinkResponse>
         {
             ["self"] = new()
             {
-                Href = BuildProcessingJobListHref(status, page, size),
+                Href = ApplyPathBase(pathBase, BuildProcessingJobListHref(status, page, size)),
                 Title = "Processing jobs"
             }
         };
@@ -176,5 +186,12 @@ public static class ProcessingJobResponseMapper
     {
         var href = $"/v1/processing-jobs?page={page}&size={size}";
         return string.IsNullOrWhiteSpace(status) ? href : $"{href}&status={status.Trim().ToLowerInvariant()}";
+    }
+
+    private static string ApplyPathBase(string? pathBase, string path)
+    {
+        return string.IsNullOrWhiteSpace(pathBase)
+            ? path
+            : $"{pathBase.TrimEnd('/')}{path}";
     }
 }

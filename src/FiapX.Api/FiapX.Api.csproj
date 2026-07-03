@@ -10,12 +10,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FiapX.Application\FiapX.Application.csproj" />
-    <ProjectReference Include="..\FiapX.Infra.CrossCutting.IoC\FiapX.Infra.CrossCutting.IoC.csproj" />
+    <ProjectReference Include="..\FiapX.Infra.CrossCutting\FiapX.Infra.CrossCutting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 

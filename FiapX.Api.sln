@@ -35,13 +35,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Domain", "src\FiapX.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Messaging", "src\FiapX.Infra.Messaging\FiapX.Infra.Messaging.csproj", "{B5FB9B54-E4AE-1889-5625-0185DCE2280D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.CrossCutting.IoC", "src\FiapX.Infra.CrossCutting.IoC\FiapX.Infra.CrossCutting.IoC.csproj", "{C63A16E3-4B5D-D1E4-2C0A-F5ED4351CD63}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.CrossCutting", "src\FiapX.Infra.CrossCutting\FiapX.Infra.CrossCutting.csproj", "{C63A16E3-4B5D-D1E4-2C0A-F5ED4351CD63}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Storage", "src\FiapX.Infra.Storage\FiapX.Infra.Storage.csproj", "{DE7B8643-7E64-D49A-EAD7-00788B0D07E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Data", "src\FiapX.Infra.Data\FiapX.Infra.Data.csproj", "{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Tests.Unit", "tests\FiapX.Tests.Unit\FiapX.Tests.Unit.csproj", "{B8874790-740A-8063-CAB8-6977A644AC6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Tests.Integration", "tests\FiapX.Tests.Integration\FiapX.Tests.Integration.csproj", "{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{B8874790-740A-8063-CAB8-6977A644AC6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8874790-740A-8063-CAB8-6977A644AC6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8874790-740A-8063-CAB8-6977A644AC6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,6 +100,7 @@ Global
 		{DE7B8643-7E64-D49A-EAD7-00788B0D07E2} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 		{B8874790-740A-8063-CAB8-6977A644AC6B} = {5D05AB0C-CDA6-4AB0-8472-38E31D290A1B}
+		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB} = {5D05AB0C-CDA6-4AB0-8472-38E31D290A1B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F9BFFB5-1998-4B7B-BB7F-06B799A9234D}

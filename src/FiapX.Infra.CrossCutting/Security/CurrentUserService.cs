@@ -1,7 +1,9 @@
 using FiapX.Application.Abstractions.Auth;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
-namespace FiapX.Api.Security;
+namespace FiapX.Infra.CrossCutting.Security;
 
 public sealed class CurrentUserService(
     IHttpContextAccessor httpContextAccessor,
