@@ -1,6 +1,7 @@
 using Amazon.DynamoDBv2.DataModel;
 using FiapX.Application.ProcessingJobs.Repositories;
 using FiapX.Domain.ProcessingJobs;
+using FiapX.Infra.Data.Mappers;
 using FiapX.Infra.Data.Models;
 using FiapX.Infra.Data.Options;
 using Microsoft.Extensions.Options;
@@ -81,7 +82,7 @@ public sealed class ProcessingJobRepository(
     public async Task SaveAsync(ProcessingJob processingJob, CancellationToken cancellationToken)
     {
         await context.SaveAsync(
-            ProcessingJobModel.FromDomain(processingJob),
+            ProcessingJobModelMapper.FromDomain(processingJob),
             new SaveConfig { OverrideTableName = _tableName },
             cancellationToken);
     }
@@ -108,7 +109,7 @@ public sealed class ProcessingJobRepository(
         if (status is null)
             return models;
 
-        var storageStatus = ProcessingJobModel.ToStorageStatus(status.Value);
+        var storageStatus = ProcessingJobModelMapper.ToStorageStatus(status.Value);
         return models.Where(model => model.Status == storageStatus);
     }
 }

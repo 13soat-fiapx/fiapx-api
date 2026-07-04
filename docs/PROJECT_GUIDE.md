@@ -23,7 +23,7 @@ Responsabilidades da API:
 - Middlewares HTTP.
 - Extensions de configuração do módulo HTTP.
 - Swagger.
-- Current user baseado em JWT ou headers locais.
+- Current user baseado nas claims do JWT.
 
 `FiapX.Application`:
 
@@ -59,7 +59,7 @@ Responsabilidades da API:
 - Envelope de evento com `headers` e `payload`.
 - Propagação de `traceparent`.
 
-`FiapX.Infra.CrossCutting.IoC`:
+`FiapX.Infra.CrossCutting`:
 
 - Registro de dependências.
 - Configuração dos clients AWS.
@@ -108,7 +108,7 @@ A API criou o job e devolveu a URL assinada, mas o upload ainda não foi confirm
 
 `queued`:
 
-O upload foi confirmado e a mensagem foi publicada na fila `video-processing-requested`.
+O upload foi confirmado e a mensagem foi publicada na fila `fiapx-{env}-video-processing-requested`.
 
 `processing`:
 
@@ -135,7 +135,7 @@ Endpoints principais:
 
 ## Contrato de mensageria implementado
 
-A API publica na fila lógica `VideoProcessingRequested`, configurada por padrão como `video-processing-requested`.
+A API publica na fila lógica `VideoProcessingRequested`, configurada por padrão como `fiapx-{env}-video-processing-requested`.
 
 Envelope publicado:
 
@@ -155,8 +155,9 @@ Envelope publicado:
     "description": "Demo video",
     "author": "Fulano de Tal",
     "clientReference": "ticket-123",
+
     "inputFile": {
-      "bucket": "fiapx-media",
+      "bucket": "fiapx-dev-artifacts-000000000000",
       "key": "videos/<id>/original.mp4",
       "region": "us-east-1",
       "originalFileName": "video.mp4",
@@ -171,7 +172,7 @@ Envelope publicado:
 
 ## DynamoDB
 
-Tabela: `fiapx-processing-jobs`.
+Tabela: `fiapx-{env}-videos-db`.
 
 Chave primária:
 
@@ -186,7 +187,7 @@ A API e o processor compartilham essa tabela por trade-off do hackathon. Em uma 
 
 ## S3
 
-Bucket padrão local: `fiapx-media`.
+Bucket padrão local: `fiapx-dev-artifacts-000000000000`.
 
 Prefixos:
 
@@ -197,25 +198,13 @@ A API não recebe o binário do video. Ela apenas gera uma URL assinada para upl
 
 ## Segurança
 
-Localmente, `Authentication:Enabled=false` permite simular o usuário por headers:
+Com `Authentication:Enabled=true`, a API exige um Bearer token e lê as claims de usuário:
 
-- `X-User-Id`.
-- `X-User-Name`.
-- `X-User-Email`.
+- `sub`, usado como `userId`.
+- `name`, usado como nome do usuário.
+- `email`, usado como e-mail do usuário.
 
-Em produção ou AWS Student, é possível ativar JWT:
-
-```json
-{
-  "Authentication": {
-    "Enabled": true,
-    "Authority": "https://seu-tenant.auth0.com/",
-    "Audience": "fiapx-api"
-  }
-}
-```
-
-Com autenticação ativa, a API exige token nos controllers. Em `DEBUG`, seguindo o padrão do Mechanics, a API aceita Bearer token sem validar assinatura/expiração para facilitar testes locais. Fora de `DEBUG`, a validação usa `Authority` e `Audience`, normalmente apontando para o Auth0.
+A API não valida assinatura, issuer, audience ou expiração do JWT. Essa validação pertence ao gateway; o serviço só consome as claims já validadas.
 
 ## Validação
 
