@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+.git/
+.gitignore
+README.md
+docs/
+aws/
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+**/*.user
+**/*.csproj.user
+TestResults/

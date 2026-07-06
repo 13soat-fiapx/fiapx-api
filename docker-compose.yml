@@ -1,0 +1,50 @@
+name: fiapx-api
+
+services:
+  localstack:
+    image: localstack/localstack:3
+    ports:
+      - "4566:4566"
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
+      FIAPX_PROJECT: fiapx
+      FIAPX_ENVIRONMENT: ${FIAPX_ENVIRONMENT:-dev}
+      LOCALSTACK_ACCOUNT_ID: "000000000000"
+      SERVICES: s3,sqs,dynamodb
+      DYNAMODB_SHARE_DB: "1"
+      DYNAMODB_IN_MEMORY: "1"
+      DEBUG: "0"
+    volumes:
+      - ./scripts/localstack:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      localstack:
+        condition: service_healthy
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      AppInfo__RoutePrefix: api
+      Authentication__Enabled: "true"
+      AwsCredentials__Region: us-east-1
+      AwsCredentials__UseLocalstack: "true"
+      AwsCredentials__LocalstackUrl: http://localstack:4566
+      AwsCredentials__AccessKey: test
+      AwsCredentials__SecretAccessKey: test
+      AwsCredentials__SessionToken: test
+      StorageOptions__BucketName: "fiapx-${FIAPX_ENVIRONMENT:-dev}-artifacts-000000000000"
+      StorageOptions__Region: us-east-1
+      StorageOptions__PublicServiceUrl: http://localhost:4566
+      MessagingOptions__DisableConsumers: "true"
+      MessagingOptions__QueueNames__VideoProcessingRequested: "fiapx-${FIAPX_ENVIRONMENT:-dev}-video-processing-requested"
+      TableNames__ProcessingJobs: "fiapx-${FIAPX_ENVIRONMENT:-dev}-videos-db"

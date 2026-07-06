@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.app.name }}-configs
+data:
+  {{- $envMap := dict "dev" "Development" "stg" "Staging" "prod" "Production" }}
+  {{- $envName := index $envMap .Values.app.env | default "Development" }}
+  ASPNETCORE_ENVIRONMENT: {{ $envName | quote }}
+  AppInfo__Name: {{ .Values.app.name | quote }}
+  AppInfo__Version: {{ .Values.app.version | quote }}
+  AppInfo__RoutePrefix: {{ .Values.app.routePrefix | quote }}
+  Authentication__Enabled: {{ .Values.auth.enabled | quote }}
+  AwsCredentials__Region: {{ .Values.aws.region | quote }}
+  AwsCredentials__UseLocalstack: "false"
+  StorageOptions__BucketName: {{ .Values.storage.bucketName | required "Parameter storage.bucketName is required." | quote }}
+  StorageOptions__Region: {{ .Values.aws.region | quote }}
+  StorageOptions__UploadUrlExpirationMinutes: {{ .Values.storage.uploadUrlExpirationMinutes | quote }}
+  StorageOptions__DownloadUrlExpirationMinutes: {{ .Values.storage.downloadUrlExpirationMinutes | quote }}
+  StorageOptions__PublicServiceUrl: {{ .Values.storage.publicServiceUrl | quote }}
+  MessagingOptions__DisableConsumers: "true"
+  TableNames__ProcessingJobs: {{ .Values.tables.processingJobs | default (printf "%s-%s-videos-db" .Values.app.project .Values.app.env) | quote }}
+  {{- range $key, $value := .Values.queueNames }}
+  MessagingOptions__QueueNames__{{ $key }}: "{{ $.Values.app.project }}-{{ $.Values.app.env }}-{{ $value }}"
+  {{- end }}

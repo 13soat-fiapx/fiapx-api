@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
@@ -13,9 +13,22 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:5153",
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AppInfo__RoutePrefix": "api",
+        "Authentication__Enabled": "false",
+        "AwsCredentials__Region": "us-east-1",
+        "AwsCredentials__UseLocalstack": "true",
+        "AwsCredentials__LocalstackUrl": "http://localhost:4566",
+        "AwsCredentials__AccessKey": "test",
+        "AwsCredentials__SecretAccessKey": "test",
+        "AwsCredentials__SessionToken": "test",
+        "StorageOptions__BucketName": "fiapx-dev-artifacts-000000000000",
+        "StorageOptions__Region": "us-east-1",
+        "StorageOptions__PublicServiceUrl": "http://localhost:4566",
+        "MessagingOptions__QueueNames__VideoProcessingRequested": "fiapx-dev-video-processing-requested",
+        "TableNames__ProcessingJobs": "fiapx-dev-videos-db"
       }
     },
     "https": {

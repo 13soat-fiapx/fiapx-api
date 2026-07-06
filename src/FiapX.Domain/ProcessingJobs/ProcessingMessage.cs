@@ -31,4 +31,18 @@ public sealed class ProcessingMessage
         Severity = normalizedSeverity;
         CreatedAt = DateTimeOffset.UtcNow;
     }
+
+    public static ProcessingMessage Restore(
+        string code,
+        string message,
+        string severity,
+        DateTimeOffset createdAt)
+    {
+        var processingMessage = new ProcessingMessage(code, message, severity)
+        {
+            CreatedAt = createdAt
+        };
+
+        return processingMessage;
+    }
 }
