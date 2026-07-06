@@ -8,11 +8,24 @@ LOCALSTACK_ACCOUNT_ID=${LOCALSTACK_ACCOUNT_ID:-000000000000}
 RESOURCE_PREFIX="${FIAPX_PROJECT}-${FIAPX_ENVIRONMENT}"
 BUCKET=${FIAPX_BUCKET:-${RESOURCE_PREFIX}-artifacts-${LOCALSTACK_ACCOUNT_ID}}
 
-if ! awslocal --region "$AWS_REGION" s3api head-bucket --bucket "$BUCKET" >/dev/null 2>&1; then
-  awslocal --region "$AWS_REGION" s3api create-bucket --bucket "$BUCKET" >/dev/null
-fi
+awslocal --region "$AWS_REGION" s3api create-bucket --bucket "$BUCKET" >/dev/null
 
 awslocal --region "$AWS_REGION" s3api put-object --bucket "$BUCKET" --key videos/ >/dev/null
 awslocal --region "$AWS_REGION" s3api put-object --bucket "$BUCKET" --key frames/ >/dev/null
+
+awslocal --region "$AWS_REGION" s3api put-bucket-cors \
+  --bucket "$BUCKET" \
+  --cors-configuration '{
+    "CORSRules": [
+      {
+        "AllowedOrigins": ["http://localhost:8080", "https://d2nyagk7gn75jo.cloudfront.net"],
+        "AllowedMethods": ["GET", "HEAD", "PUT"],
+        "AllowedHeaders": ["*"],
+        "ExposeHeaders": ["ETag"],
+        "MaxAgeSeconds": 3000
+      }
+    ]
+  }'
+
 
 echo "Bucket '$BUCKET' is ready."

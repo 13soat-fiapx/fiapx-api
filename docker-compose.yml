@@ -14,6 +14,7 @@ services:
       DYNAMODB_SHARE_DB: "1"
       DYNAMODB_IN_MEMORY: "1"
       DEBUG: "0"
+      EXTRA_CORS_ALLOWED_ORIGINS: http://localhost:8080,https://d2nyagk7gn75jo.cloudfront.net
     volumes:
       - ./scripts/localstack:/etc/localstack/init/ready.d:ro
     healthcheck:
