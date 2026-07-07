@@ -24,7 +24,6 @@ storage:
   bucketName: "fiapx-dev-web-499509007072"
   uploadUrlExpirationMinutes: 15
   downloadUrlExpirationMinutes: 5
-  publicServiceUrl: ""
 
 tables:
   processingJobs: ""

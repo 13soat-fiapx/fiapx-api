@@ -7,11 +7,6 @@ FIAPX_ENVIRONMENT=${FIAPX_ENVIRONMENT:-dev}
 RESOURCE_PREFIX="${FIAPX_PROJECT}-${FIAPX_ENVIRONMENT}"
 TABLE=${FIAPX_PROCESSING_JOBS_TABLE:-${RESOURCE_PREFIX}-videos-db}
 
-if awslocal --region "$AWS_REGION" dynamodb describe-table --table-name "$TABLE" >/dev/null 2>&1; then
-  echo "Table '$TABLE' already exists."
-  exit 0
-fi
-
 awslocal --region "$AWS_REGION" dynamodb create-table \
   --table-name "$TABLE" \
   --billing-mode PAY_PER_REQUEST \
