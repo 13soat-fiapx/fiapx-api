@@ -32,12 +32,35 @@ jobs:
       - id: resolve
         uses: 13soat-fiapx/fiapx-infra/.github/actions/resolve-environment@main
 
+  resolve-bucket-name:
+    name: Resolve bucket name
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      bucket-name: ${{ steps.bucket.outputs.bucket_name }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: resolve
+        uses: 13soat-fiapx/fiapx-infra/.github/actions/resolve-environment@main
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Resolve bucket name
+        id: bucket
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "bucket_name=fiapx-${{ steps.resolve.outputs.environment }}-artifacts-${ACCOUNT_ID}" >> $GITHUB_OUTPUT
+
   deploy:
     name: Deploy Helm
-    needs: [tests, resolve-environment]
+    needs: [tests, resolve-environment, resolve-bucket-name]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     uses: 13soat-fiapx/fiapx-infra/.github/workflows/deploy-helm.yml@main
     with:
       environment: ${{ needs.resolve-environment.outputs.environment }}
       service-name: ${{ vars.SERVICE_NAME }}
+      additional-args: --set storage.bucketName=${{ needs.resolve-bucket-name.outputs.bucket-name }}
     secrets: inherit
