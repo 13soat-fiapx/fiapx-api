@@ -20,14 +20,17 @@ public static class RepositoryExtensions
         services.AddSingleton<IAmazonDynamoDB>(_ =>
         {
             var options = configuration.GetSection("AwsCredentials").Get<AwsCredentialsOptions>()!;
+            var config = new AmazonDynamoDBConfig
+            {
+                RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region)
+            };
+
+            if (options.UseLocalstack)
+                config.ServiceURL = options.LocalstackUrl;
 
             return new AmazonDynamoDBClient(
                 AwsClientFactory.CreateCredentials(options),
-                new AmazonDynamoDBConfig
-                {
-                    RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),
-                    ServiceURL = options.UseLocalstack ? options.LocalstackUrl : null
-                });
+                config);
         });
 
         services.AddSingleton<IDynamoDBContext, DynamoDBContext>();

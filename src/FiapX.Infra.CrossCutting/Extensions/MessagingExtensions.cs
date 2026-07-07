@@ -20,14 +20,17 @@ public static class MessagingExtensions
         services.AddSingleton<IAmazonSQS>(_ =>
         {
             var options = configuration.GetSection("AwsCredentials").Get<AwsCredentialsOptions>()!;
+            var config = new AmazonSQSConfig
+            {
+                RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region)
+            };
+
+            if (options.UseLocalstack)
+                config.ServiceURL = options.LocalstackUrl;
 
             return new AmazonSQSClient(
                 AwsClientFactory.CreateCredentials(options),
-                new AmazonSQSConfig
-                {
-                    RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),
-                    ServiceURL = options.UseLocalstack ? options.LocalstackUrl : null
-                });
+                config);
         });
 
         services.AddSingleton<QueueUrlResolver>();

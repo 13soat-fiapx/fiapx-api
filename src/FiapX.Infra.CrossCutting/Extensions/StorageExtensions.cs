@@ -19,15 +19,18 @@ public static class StorageExtensions
         services.AddSingleton<IAmazonS3>(_ =>
         {
             var options = configuration.GetSection("AwsCredentials").Get<AwsCredentialsOptions>()!;
+            var config = new AmazonS3Config
+            {
+                RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),
+                ForcePathStyle = options.UseLocalstack
+            };
+
+            if (options.UseLocalstack)
+                config.ServiceURL = options.LocalstackUrl;
 
             return new AmazonS3Client(
                 AwsClientFactory.CreateCredentials(options),
-                new AmazonS3Config
-                {
-                    RegionEndpoint = RegionEndpoint.GetBySystemName(options.Region),
-                    ServiceURL = options.UseLocalstack ? options.LocalstackUrl : null,
-                    ForcePathStyle = options.UseLocalstack
-                });
+                config);
         });
 
         services.AddScoped<IStorageService, S3StorageService>();
