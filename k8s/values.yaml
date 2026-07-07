@@ -24,7 +24,6 @@ storage:
   bucketName: ""
   uploadUrlExpirationMinutes: 15
   downloadUrlExpirationMinutes: 5
-  publicServiceUrl: ""
 
 tables:
   processingJobs: ""

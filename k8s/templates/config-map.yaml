@@ -16,7 +16,6 @@ data:
   StorageOptions__Region: {{ .Values.aws.region | quote }}
   StorageOptions__UploadUrlExpirationMinutes: {{ .Values.storage.uploadUrlExpirationMinutes | quote }}
   StorageOptions__DownloadUrlExpirationMinutes: {{ .Values.storage.downloadUrlExpirationMinutes | quote }}
-  StorageOptions__PublicServiceUrl: {{ .Values.storage.publicServiceUrl | quote }}
   MessagingOptions__DisableConsumers: "true"
   TableNames__ProcessingJobs: {{ .Values.tables.processingJobs | default (printf "%s-%s-videos-db" .Values.app.project .Values.app.env) | quote }}
   {{- range $key, $value := .Values.queueNames }}
