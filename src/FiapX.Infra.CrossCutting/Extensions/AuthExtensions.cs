@@ -1,4 +1,5 @@
 using FiapX.Application.Abstractions.Auth;
+using FiapX.Infra.CrossCutting.Options;
 using FiapX.Infra.CrossCutting.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,9 @@ public static class AuthExtensions
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
+        services.Configure<Auth0Options>(configuration.GetSection(Auth0Options.SectionName));
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddHttpClient<IUserProfileService, Auth0UserProfileService>();
         services.AddAuthenticationWithoutValidation();
         services.AddAuthorization();
 

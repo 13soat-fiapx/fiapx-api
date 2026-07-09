@@ -23,6 +23,7 @@ public sealed class ProcessingJobAppServiceTests
     private Mock<IStorageService> _storageServiceMock = null!;
     private Mock<IMessagePublisher> _messagePublisherMock = null!;
     private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IUserProfileService> _userProfileServiceMock = null!;
     private ProcessingJobAppService _service = null!;
 
     [TestInitialize]
@@ -32,16 +33,16 @@ public sealed class ProcessingJobAppServiceTests
         _storageServiceMock = new Mock<IStorageService>(MockBehavior.Strict);
         _messagePublisherMock = new Mock<IMessagePublisher>(MockBehavior.Strict);
         _currentUserServiceMock = new Mock<ICurrentUserService>(MockBehavior.Strict);
+        _userProfileServiceMock = new Mock<IUserProfileService>(MockBehavior.Strict);
 
         _currentUserServiceMock.SetupGet(currentUser => currentUser.UserId).Returns(UserId);
-        _currentUserServiceMock.SetupGet(currentUser => currentUser.UserName).Returns(UserName);
-        _currentUserServiceMock.SetupGet(currentUser => currentUser.UserEmail).Returns(UserEmail);
 
         _service = new ProcessingJobAppService(
             _processingJobRepositoryMock.Object,
             _storageServiceMock.Object,
             _messagePublisherMock.Object,
-            _currentUserServiceMock.Object);
+            _currentUserServiceMock.Object,
+            _userProfileServiceMock.Object);
     }
 
     [TestMethod]
@@ -53,6 +54,10 @@ public sealed class ProcessingJobAppServiceTests
         _processingJobRepositoryMock
             .Setup(repository => repository.GetByIdempotencyKeyAsync(UserId, "idempotency-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ProcessingJob?)null);
+
+        _userProfileServiceMock
+            .Setup(service => service.GetCurrentUserAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfile(UserId, UserName, UserEmail));
 
         _storageServiceMock
             .Setup(storage => storage.CreatePresignedUploadAsync(
@@ -72,6 +77,8 @@ public sealed class ProcessingJobAppServiceTests
 
         Assert.IsNotNull(savedProcessingJob);
         Assert.AreEqual(savedProcessingJob.Id, result.ProcessingJob.Id);
+        Assert.AreEqual(UserName, savedProcessingJob.UserName);
+        Assert.AreEqual(UserEmail, savedProcessingJob.UserEmail);
         Assert.AreEqual("idempotency-1", savedProcessingJob.IdempotencyKey);
         Assert.AreEqual(ProcessingStatus.UploadPending, savedProcessingJob.Status);
         Assert.AreEqual(request.InputFile.OriginalFileName, result.Upload.S3Object.Key.Split('/').Last());

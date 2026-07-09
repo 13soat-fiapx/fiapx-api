@@ -19,6 +19,7 @@ aws:
 
 auth:
   enabled: true
+  userInfoEndpoint: https://dev-oq5eot5o33s27xpo.us.auth0.com/userinfo
 
 storage:
   bucketName: ""

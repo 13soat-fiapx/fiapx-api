@@ -5,7 +5,6 @@ using FiapX.Application.ProcessingJobs.Messages;
 using FiapX.Application.ProcessingJobs.Repositories;
 using FiapX.Application.ProcessingJobs.Requests;
 using FiapX.Application.ProcessingJobs.Results;
-using FiapX.Application.Utils;
 using FiapX.Domain.Base.Exceptions;
 using FiapX.Domain.ProcessingJobs;
 
@@ -15,7 +14,8 @@ public sealed class ProcessingJobAppService(
     IProcessingJobRepository processingJobRepository,
     IStorageService storageService,
     IMessagePublisher messagePublisher,
-    ICurrentUserService currentUserService) : IAppService
+    ICurrentUserService currentUserService,
+    IUserProfileService userProfileService)
 {
     public Task<CreatedProcessingJobResult> CreateAsync(
         CreateProcessingJobRequest request,
@@ -39,6 +39,7 @@ public sealed class ProcessingJobAppService(
                 return await ReplayCreateAsync(existingJob, request, cancellationToken);
         }
 
+        var currentUser = await userProfileService.GetCurrentUserAsync(cancellationToken);
         var processingJobId = Guid.NewGuid();
 
         var upload = await storageService.CreatePresignedUploadAsync(
@@ -56,9 +57,9 @@ public sealed class ProcessingJobAppService(
 
         var processingJob = ProcessingJob.Create(
             processingJobId,
-            currentUserService.UserId,
-            currentUserService.UserName,
-            currentUserService.UserEmail,
+            currentUser.Id,
+            RequireProfileValue(currentUser.Name, "name"),
+            RequireProfileValue(currentUser.Email, "email"),
             inputFile,
             normalizedIdempotencyKey,
             request.Description,
@@ -289,6 +290,15 @@ public sealed class ProcessingJobAppService(
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string RequireProfileValue(string? value, string fieldName)
+    {
+        var normalizedValue = NormalizeOptional(value);
+        if (normalizedValue is null)
+            throw new BusinessException($"Authenticated user profile must contain '{fieldName}'.");
+
+        return normalizedValue;
+    }
 
     private static VideoProcessingRequestedMessage ToRequestedMessage(ProcessingJob processingJob)
     {
