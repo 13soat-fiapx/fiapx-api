@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
+using FiapX.Application.Abstractions.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FiapX.Tests.Integration.Helpers;
 
@@ -48,6 +50,9 @@ public sealed class ApplicationFactory(TestAwsClientContainer awsContainer) : We
 
         builder.ConfigureServices(services =>
         {
+            services.RemoveAll<IUserProfileService>();
+            services.AddScoped<IUserProfileService, TestUserProfileService>();
+
             services.PostConfigure<JwtBearerOptions>(
                 JwtBearerDefaults.AuthenticationScheme,
                 options =>
@@ -55,7 +60,16 @@ public sealed class ApplicationFactory(TestAwsClientContainer awsContainer) : We
                     options.Authority = null;
                     options.TokenValidationParameters.ValidateIssuer = false;
                     options.TokenValidationParameters.ValidateAudience = false;
-                });
+            });
         });
+    }
+
+    private sealed class TestUserProfileService(ICurrentUserService currentUserService) : IUserProfileService
+    {
+        public Task<UserProfile> GetCurrentUserAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(new UserProfile(
+                currentUserService.UserId,
+                "Integration Test User",
+                "integration.test@example.com"));
     }
 }
