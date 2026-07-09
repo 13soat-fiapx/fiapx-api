@@ -1,4 +1,4 @@
-using FiapX.Application.Utils;
+using FiapX.Application.ProcessingJobs.Validators;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +8,7 @@ public static class ValidatorExtensions
 {
     public static IServiceCollection AddRequestValidators(this IServiceCollection services)
     {
-        services.AddValidatorsFromAssembly(typeof(IAppService).Assembly);
+        services.AddValidatorsFromAssembly(typeof(CreateProcessingJobRequestValidator).Assembly);
 
         return services;
     }

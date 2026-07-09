@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\FiapX.Api\FiapX.Api.csproj" />
     <ProjectReference Include="..\..\src\FiapX.Application\FiapX.Application.csproj" />
     <ProjectReference Include="..\..\src\FiapX.Domain\FiapX.Domain.csproj" />
   </ItemGroup>
