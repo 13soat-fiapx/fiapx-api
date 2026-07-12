@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1.20
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
 
 COPY Directory.Build.props .
-COPY --parents src/**/*.csproj src/**/packages.lock.json .
+COPY --parents src/**/*.csproj src/**/packages.lock.json ./
 RUN dotnet restore src/FiapX.Api/FiapX.Api.csproj --locked-mode
 
 COPY src src
