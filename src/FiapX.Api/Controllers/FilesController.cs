@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FiapX.Api.Controllers;
 
 /// <summary>
-///     Exposes metadata and download redirects for generated processing result files.
+///     Exposes metadata and generates download link for generated processing result files.
 /// </summary>
 [ApiController]
 [Produces("application/json")]
@@ -51,6 +51,7 @@ public sealed class FilesController(ProcessingJobAppService processingJobAppServ
     {
         var result = await processingJobAppService.GetFileDownloadAsync(fileId, cancellationToken);
         var response = ProcessingJobResponseMapper.ToFileDownloadResponse(result);
+        Response.Headers.CacheControl = "private, max-age=30";
 
         return Ok(response);
     }
