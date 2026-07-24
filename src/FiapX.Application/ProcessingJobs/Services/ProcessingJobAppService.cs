@@ -1,12 +1,15 @@
 using FiapX.Application.Abstractions.Auth;
 using FiapX.Application.Abstractions.Messaging;
 using FiapX.Application.Abstractions.Storage;
+using FiapX.Application.Observability;
 using FiapX.Application.ProcessingJobs.Messages;
 using FiapX.Application.ProcessingJobs.Repositories;
 using FiapX.Application.ProcessingJobs.Requests;
+using FiapX.Application.ProcessingJobs.Responses;
 using FiapX.Application.ProcessingJobs.Results;
 using FiapX.Domain.Base.Exceptions;
 using FiapX.Domain.ProcessingJobs;
+using System.Diagnostics;
 
 namespace FiapX.Application.ProcessingJobs.Services;
 
@@ -41,6 +44,7 @@ public sealed class ProcessingJobAppService(
 
         var currentUser = await userProfileService.GetCurrentUserAsync(cancellationToken);
         var processingJobId = Guid.NewGuid();
+        Activity.Current?.SetTag("video.id", processingJobId);
 
         var upload = await storageService.CreatePresignedUploadAsync(
             processingJobId,
@@ -68,6 +72,8 @@ public sealed class ProcessingJobAppService(
 
         await processingJobRepository.SaveAsync(processingJob, cancellationToken);
 
+        RecordStatusTransition(ProcessingStatus.UploadPending);
+
         return new CreatedProcessingJobResult
         {
             ProcessingJob = processingJob,
@@ -87,6 +93,8 @@ public sealed class ProcessingJobAppService(
         string? idempotencyKey,
         CancellationToken cancellationToken)
     {
+        Activity.Current?.SetTag("video.id", processingJobId);
+
         var processingJob = await GetProcessingJobAsync(processingJobId, cancellationToken);
         EnsureCurrentUserOwns(processingJob);
         var normalizedIdempotencyKey = NormalizeOptional(idempotencyKey);
@@ -120,6 +128,9 @@ public sealed class ProcessingJobAppService(
 
         await processingJobRepository.SaveAsync(processingJob, cancellationToken);
 
+        AppMetrics.VideosUploaded.Add(1);
+        RecordStatusTransition(ProcessingStatus.Queued);
+
         try
         {
             await messagePublisher.PublishAsync(ToRequestedMessage(processingJob), cancellationToken);
@@ -127,6 +138,7 @@ public sealed class ProcessingJobAppService(
         catch
         {
             processingJob.Fail("Processing request could not be queued.");
+            RecordStatusTransition(ProcessingStatus.Failed);
 
             try
             {
@@ -147,6 +159,8 @@ public sealed class ProcessingJobAppService(
         Guid processingJobId,
         CancellationToken cancellationToken)
     {
+        Activity.Current?.SetTag("video.id", processingJobId);
+
         var processingJob = await GetProcessingJobAsync(processingJobId, cancellationToken);
         EnsureCurrentUserOwns(processingJob);
 
@@ -234,6 +248,8 @@ public sealed class ProcessingJobAppService(
         if (processingJob.ResultFile is null || processingJob.Status != ProcessingStatus.Succeeded)
             throw new EntityNotFoundException("FileResult", fileId);
 
+        Activity.Current?.SetTag("video.id", processingJob.Id);
+
         return processingJob;
     }
 
@@ -248,6 +264,8 @@ public sealed class ProcessingJobAppService(
         CreateProcessingJobRequest request,
         CancellationToken cancellationToken)
     {
+        Activity.Current?.SetTag("video.id", processingJob.Id);
+
         EnsureSameCreationRequest(processingJob, request);
 
         if (processingJob.Status != ProcessingStatus.UploadPending)
@@ -287,6 +305,10 @@ public sealed class ProcessingJobAppService(
 
     private static bool EqualOptional(string? stored, string? requested, StringComparison comparison) =>
         string.Equals(stored, NormalizeOptional(requested), comparison);
+
+    private static void RecordStatusTransition(ProcessingStatus status) =>
+        AppMetrics.VideoStatusTransitions.Add(1, new KeyValuePair<string, object?>(
+            "status", ProcessingStatusContractMapper.ToContract(status)));
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

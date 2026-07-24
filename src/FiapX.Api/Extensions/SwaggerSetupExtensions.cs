@@ -13,7 +13,7 @@ public static class SwaggerSetupExtensions
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = configuration["AppInfo:Name"] ?? "FIAP X - Media Processing API",
+                Title = "FIAP X - Media Processing API",
                 Version = "v1",
                 Description = configuration["AppInfo:Description"]
             });

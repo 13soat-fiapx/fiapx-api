@@ -4,6 +4,7 @@ using FiapX.Application.Abstractions.Messaging;
 using FiapX.Application.ProcessingJobs.Messages;
 using FiapX.Infra.Messaging.Helpers;
 using FiapX.Infra.Messaging.Models;
+using FiapX.Infra.Observability.Messaging;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -26,6 +27,11 @@ public sealed class MessagePublisher(
     {
         var eventMetadata = ResolveEventMetadata(typeof(TMessage));
         var queueUrl = await queueUrlResolver.ResolveAsync(eventMetadata.QueueLogicalName, cancellationToken);
+        var queueName = queueUrl.Split('/')[^1];
+
+        using var activity = MessageTracing.StartProducerActivity(queueName);
+        if (message is VideoProcessingRequestedMessage requestedMessage)
+            activity?.SetTag("video.id", requestedMessage.ProcessingJobId);
 
         var envelope = new MessageBase<TMessage>
         {

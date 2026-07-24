@@ -1,6 +1,7 @@
 using FiapX.Api.Extensions;
 using FiapX.Api.Middlewares;
 using FiapX.Infra.CrossCutting;
+using FiapX.Infra.Observability;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using System.Diagnostics;
 using System.Text.Json;
@@ -10,6 +11,8 @@ Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 Activity.ForceDefaultIdFormat = true;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddObservability(ObservabilityProfile.Api);
 
 builder.Services
     .AddControllers(options =>
@@ -42,8 +45,6 @@ var routePrefix = app.Configuration["AppInfo:RoutePrefix"];
 if (!string.IsNullOrWhiteSpace(routePrefix))
     app.UsePathBase($"/{routePrefix.Trim('/')}");
 
-app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseMiddleware<DomainValidationMiddleware>();
 

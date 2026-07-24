@@ -32,7 +32,7 @@ public sealed class ExceptionHandlerMiddleware(
             {
                 logger.LogError(
                     exception,
-                    "Unhandled exception | {HttpMethod} {HttpRoute}",
+                    "Unhandled exception while processing {HttpMethod} {HttpRoute}",
                     context.Request.Method,
                     route);
             }
@@ -40,7 +40,7 @@ public sealed class ExceptionHandlerMiddleware(
             {
                 logger.LogWarning(
                     exception,
-                    "Handled exception | {HttpMethod} {HttpRoute}",
+                    "Handled exception while processing {HttpMethod} {HttpRoute}",
                     context.Request.Method,
                     route);
             }

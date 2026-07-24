@@ -10,6 +10,7 @@ data:
   AppInfo__Version: {{ .Values.app.version | quote }}
   AppInfo__RoutePrefix: {{ .Values.app.routePrefix | quote }}
   Authentication__Enabled: {{ .Values.auth.enabled | quote }}
+  Datadog__OtlpEndpoint: {{ .Values.datadog.otlpEndpoint | quote }}
   Auth0__UserInfoEndpoint: {{ .Values.auth.userInfoEndpoint | quote }}
   AwsCredentials__Region: {{ .Values.aws.region | quote }}
   AwsCredentials__UseLocalstack: "false"

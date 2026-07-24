@@ -43,6 +43,12 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.app.name }}-aws
                   key: session-token
+            - name: Datadog__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.app.name }}-datadog
+                  key: api-key
+                  optional: true
           readinessProbe:
             httpGet:
               path: /health

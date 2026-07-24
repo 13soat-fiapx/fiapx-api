@@ -32,5 +32,8 @@ tables:
 queueNames:
   VideoProcessingRequested: video-processing-requested
 
+datadog:
+  otlpEndpoint: "https://otlp.us5.datadoghq.com"
+
 secrets:
   clusterSecretStore: fiapx-aws-secrets

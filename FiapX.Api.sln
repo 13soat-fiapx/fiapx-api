@@ -45,6 +45,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Tests.Unit", "tests\F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Tests.Integration", "tests\FiapX.Tests.Integration\FiapX.Tests.Integration.csproj", "{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiapX.Infra.Observability", "src\FiapX.Infra.Observability\FiapX.Infra.Observability.csproj", "{89A46259-FFC4-46D6-9919-FDF19736DE8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89A46259-FFC4-46D6-9919-FDF19736DE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89A46259-FFC4-46D6-9919-FDF19736DE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89A46259-FFC4-46D6-9919-FDF19736DE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89A46259-FFC4-46D6-9919-FDF19736DE8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +107,7 @@ Global
 		{DB165DBB-AB9F-9174-4CF3-66A810F7D4CF} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 		{B8874790-740A-8063-CAB8-6977A644AC6B} = {5D05AB0C-CDA6-4AB0-8472-38E31D290A1B}
 		{77F711D2-8E8F-45F9-B26B-9CDC9A344BAB} = {5D05AB0C-CDA6-4AB0-8472-38E31D290A1B}
+		{89A46259-FFC4-46D6-9919-FDF19736DE8B} = {1ABF0C11-2882-42A8-966C-30E946A185DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F9BFFB5-1998-4B7B-BB7F-06B799A9234D}

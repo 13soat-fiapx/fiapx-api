@@ -123,6 +123,20 @@ aws configure
 
 Depois disso, publique a imagem da API no ECR e instale o chart em `k8s/`, informando `image.repository`, `image.tag`, `app.env` e `storage.bucketName`. O chart da API segue o padrão `Deployment + Service + Ingress + HPA`.
 
+## Observabilidade
+
+O serviço exporta traces, métricas e logs via OpenTelemetry direto para o intake OTLP do
+Datadog, sem Agent ou Collector. A integração é encapsulada no projeto
+`FiapX.Infra.Observability`.
+
+Em execução local, a observabilidade fica desligada
+por padrão (a aplicação loga `Datadog observability disabled` na inicialização). Em cluster,
+a key chega via secret `observability/datadog-api-key`, espelhada para o namespace do
+serviço pelo Reflector; se a secret não existir, o serviço sobe normalmente com a
+observabilidade desligada.
+
+Detalhes de arquitetura, configuração e troubleshooting: [Observabilidade](../fiapx-docs/docs/observability.md).
+
 ## Documentação complementar
 
 Leia o guia do projeto em `docs/PROJECT_GUIDE.md`.
