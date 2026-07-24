@@ -5,6 +5,7 @@ using FiapX.Application.ProcessingJobs.Messages;
 using FiapX.Infra.Messaging.Helpers;
 using FiapX.Infra.Messaging.Models;
 using FiapX.Infra.Observability.Messaging;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,7 +14,8 @@ namespace FiapX.Infra.Messaging.Publishers;
 
 public sealed class MessagePublisher(
     IAmazonSQS sqsClient,
-    QueueUrlResolver queueUrlResolver) : IMessagePublisher
+    QueueUrlResolver queueUrlResolver,
+    ILogger<MessagePublisher> logger) : IMessagePublisher
 {
     private const string Source = "fiapx-api";
     private const string EventVersion = "1.0";
@@ -44,6 +46,12 @@ public sealed class MessagePublisher(
             QueueUrl = queueUrl,
             MessageBody = JsonSerializer.Serialize(envelope, _serializerOptions)
         }, cancellationToken);
+
+        logger.LogInformation(
+            "Published {EventType} event {EventId} to queue {QueueName}",
+            envelope.Headers.EventType,
+            envelope.Headers.EventId,
+            queueName);
     }
 
     private static EventHeaders BuildHeaders(string eventType)

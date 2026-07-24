@@ -3,13 +3,15 @@ using Amazon.S3.Model;
 using FiapX.Application.Abstractions.Storage;
 using FiapX.Domain.Storage;
 using FiapX.Infra.Storage.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FiapX.Infra.Storage.Services;
 
 public sealed class S3StorageService(
     IAmazonS3 s3Client,
-    IOptions<StorageOptions> options) : IStorageService
+    IOptions<StorageOptions> options,
+    ILogger<S3StorageService> logger) : IStorageService
 {
     private readonly StorageOptions _options = options.Value;
 
@@ -94,6 +96,10 @@ public sealed class S3StorageService(
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
+            logger.LogWarning(
+                "S3 object {ObjectKey} was not found in bucket {BucketName}",
+                s3Object.Key,
+                s3Object.Bucket);
             return null;
         }
     }

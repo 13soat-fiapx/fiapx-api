@@ -28,7 +28,7 @@ public static class ObservabilityExtensions
 
         if (string.IsNullOrWhiteSpace(datadog.ApiKey))
         {
-            Console.WriteLine("Datadog observability disabled: api key not configured");
+            Console.WriteLine("Observability disabled: Datadog API key not configured");
             return builder;
         }
 

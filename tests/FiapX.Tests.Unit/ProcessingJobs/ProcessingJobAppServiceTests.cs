@@ -8,6 +8,7 @@ using FiapX.Application.ProcessingJobs.Services;
 using FiapX.Domain.Base.Exceptions;
 using FiapX.Domain.ProcessingJobs;
 using FiapX.Domain.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace FiapX.Tests.Unit.ProcessingJobs;
@@ -42,7 +43,8 @@ public sealed class ProcessingJobAppServiceTests
             _storageServiceMock.Object,
             _messagePublisherMock.Object,
             _currentUserServiceMock.Object,
-            _userProfileServiceMock.Object);
+            _userProfileServiceMock.Object,
+            NullLogger<ProcessingJobAppService>.Instance);
     }
 
     [TestMethod]

@@ -9,6 +9,7 @@ using FiapX.Application.ProcessingJobs.Responses;
 using FiapX.Application.ProcessingJobs.Results;
 using FiapX.Domain.Base.Exceptions;
 using FiapX.Domain.ProcessingJobs;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace FiapX.Application.ProcessingJobs.Services;
@@ -18,7 +19,8 @@ public sealed class ProcessingJobAppService(
     IStorageService storageService,
     IMessagePublisher messagePublisher,
     ICurrentUserService currentUserService,
-    IUserProfileService userProfileService)
+    IUserProfileService userProfileService,
+    ILogger<ProcessingJobAppService> logger)
 {
     public Task<CreatedProcessingJobResult> CreateAsync(
         CreateProcessingJobRequest request,
@@ -73,6 +75,9 @@ public sealed class ProcessingJobAppService(
         await processingJobRepository.SaveAsync(processingJob, cancellationToken);
 
         RecordStatusTransition(ProcessingStatus.UploadPending);
+        logger.LogInformation(
+            "Processing job {ProcessingJobId} created and waiting for upload",
+            processingJob.Id);
 
         return new CreatedProcessingJobResult
         {
@@ -104,21 +109,44 @@ public sealed class ProcessingJobAppService(
             cancellationToken);
 
         if (metadata is null)
+        {
+            logger.LogWarning(
+                "Upload confirmation rejected for processing job {ProcessingJobId} because the file was not found in storage",
+                processingJobId);
             throw new BusinessException("Uploaded file was not found in storage.");
+        }
 
         if (request.SizeBytes.HasValue && request.SizeBytes.Value != metadata.SizeBytes)
+        {
+            logger.LogWarning(
+                "Upload confirmation rejected for processing job {ProcessingJobId} because the stored size {StoredSizeBytes} does not match the informed size {InformedSizeBytes}",
+                processingJobId,
+                metadata.SizeBytes,
+                request.SizeBytes.Value);
             throw new BusinessException("Uploaded file size does not match the informed size.");
+        }
 
         if (!string.IsNullOrWhiteSpace(request.Checksum) &&
             !string.IsNullOrWhiteSpace(metadata.Checksum) &&
             !string.Equals(request.Checksum.Trim(), metadata.Checksum.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning(
+                "Upload confirmation rejected for processing job {ProcessingJobId} because the checksum does not match",
+                processingJobId);
             throw new BusinessException("Uploaded file checksum does not match the informed checksum.");
+        }
 
         if (processingJob.Status != ProcessingStatus.UploadPending)
         {
             if (normalizedIdempotencyKey is not null &&
                 processingJob.Status is ProcessingStatus.Queued or ProcessingStatus.Processing or ProcessingStatus.Succeeded)
+            {
+                logger.LogInformation(
+                    "Upload confirmation replayed for processing job {ProcessingJobId} already in status {Status}",
+                    processingJobId,
+                    processingJob.Status);
                 return processingJob;
+            }
 
             throw new ConflictException(
                 $"Invalid status for this operation. Expected: '{ProcessingStatus.UploadPending}'. Current: '{processingJob.Status}'.");
@@ -130,13 +158,21 @@ public sealed class ProcessingJobAppService(
 
         AppMetrics.VideosUploaded.Add(1);
         RecordStatusTransition(ProcessingStatus.Queued);
+        logger.LogInformation(
+            "Upload confirmed for processing job {ProcessingJobId}, publishing processing request",
+            processingJobId);
 
         try
         {
             await messagePublisher.PublishAsync(ToRequestedMessage(processingJob), cancellationToken);
         }
-        catch
+        catch (Exception publishException)
         {
+            logger.LogError(
+                publishException,
+                "Failed to publish processing request for processing job {ProcessingJobId}",
+                processingJobId);
+
             processingJob.Fail("Processing request could not be queued.");
             RecordStatusTransition(ProcessingStatus.Failed);
 
@@ -144,13 +180,21 @@ public sealed class ProcessingJobAppService(
             {
                 await processingJobRepository.SaveAsync(processingJob, cancellationToken);
             }
-            catch
+            catch (Exception saveException)
             {
                 // Preserve the original publish failure for the HTTP response.
+                logger.LogError(
+                    saveException,
+                    "Failed to persist failed status for processing job {ProcessingJobId} after publish error",
+                    processingJobId);
             }
 
             throw;
         }
+
+        logger.LogInformation(
+            "Processing job {ProcessingJobId} queued for processing",
+            processingJobId);
 
         return processingJob;
     }
@@ -225,6 +269,11 @@ public sealed class ProcessingJobAppService(
             resultFile.FileName,
             cancellationToken);
 
+        logger.LogInformation(
+            "Presigned download generated for result file {FileId} of processing job {ProcessingJobId}",
+            fileId,
+            processingJob.Id);
+
         return new FileDownloadResult
         {
             Url = download.Url,
@@ -256,7 +305,12 @@ public sealed class ProcessingJobAppService(
     private void EnsureCurrentUserOwns(ProcessingJob processingJob)
     {
         if (!string.Equals(processingJob.UserId, currentUserService.UserId, StringComparison.Ordinal))
+        {
+            logger.LogWarning(
+                "Access denied to processing job {ProcessingJobId} because it does not belong to the current user",
+                processingJob.Id);
             throw new ForbiddenException("Processing job does not belong to the current user.");
+        }
     }
 
     private async Task<CreatedProcessingJobResult> ReplayCreateAsync(
@@ -271,6 +325,10 @@ public sealed class ProcessingJobAppService(
         if (processingJob.Status != ProcessingStatus.UploadPending)
             throw new ConflictException(
                 "Idempotency key has already been used by a processing job that is no longer accepting upload.");
+
+        logger.LogInformation(
+            "Creation replayed for processing job {ProcessingJobId} matched by idempotency key",
+            processingJob.Id);
 
         var upload = await storageService.CreatePresignedUploadAsync(
             processingJob.Id,
